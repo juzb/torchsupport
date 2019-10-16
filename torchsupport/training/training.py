@@ -234,7 +234,7 @@ class SupervisedTraining(Training):
   def each_validate(self):
     for idx, loss in enumerate(self.validation_losses):
       self.valid_writer.add_scalar(f"loss {idx}", loss, self.step_id)
-    self.valid_writer.add_scalar(f"loss total", sum(self.c), self.step_id)
+    self.valid_writer.add_scalar(f"loss total", sum(self.validation_losses), self.step_id)
 
   def each_epoch(self):
     for tag in [f"loss {idx}" for idx in range(len(self.training_losses))] + \
