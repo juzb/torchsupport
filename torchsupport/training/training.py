@@ -125,13 +125,18 @@ class SupervisedTraining(Training):
                path_prefix=".",
                report_interval=10,
                checkpoint_interval=1000,
+               num_workers=8,
                valid_callback=lambda x: None):
     super(SupervisedTraining, self).__init__()
     self.valid_callback = valid_callback
     self.network_name = network_name
-    self.writer = SummaryWriter(network_name)
+    self.batch_size = batch_size
+    self.train_writer = SummaryWriter(f'{network_name}-train')
+    self.valid_writer = SummaryWriter(f'{network_name}-valid')
+    self.meta_writer = SummaryWriter(f'{network_name}-meta')
     self.device = device
     self.accumulate = accumulate
+    self.num_workers = num_workers
     self.optimizer = optimizer(net.parameters())
     if schedule is None:
       self.schedule = torch.optim.lr_scheduler.ReduceLROnPlateau(self.optimizer, patience=10)
@@ -139,10 +144,10 @@ class SupervisedTraining(Training):
       self.schedule = schedule
     self.losses = losses
     self.train_data = DataLoader(
-      train_data, batch_size=batch_size, num_workers=8, shuffle=True, drop_last=True
+      train_data, batch_size=batch_size, num_workers=self.num_workers, shuffle=True, drop_last=True
     )
     self.validate_data = DataLoader(
-      validate_data, batch_size=batch_size, num_workers=8, shuffle=True, drop_last=True
+      validate_data, batch_size=batch_size, num_workers=self.num_workers, shuffle=True, drop_last=True
     )
     self.net = net.to(self.device)
     self.max_epochs = max_epochs
@@ -223,13 +228,21 @@ class SupervisedTraining(Training):
   def each_step(self):
     Training.each_step(self)
     for idx, loss in enumerate(self.training_losses):
-      self.writer.add_scalar(f"training loss {idx}", loss, self.step_id)
-    self.writer.add_scalar(f"training loss total", sum(self.training_losses), self.step_id)
+      self.train_writer.add_scalar(f"loss {idx}", loss, self.step_id)
+    self.train_writer.add_scalar(f"loss total", sum(self.training_losses), self.step_id)
 
   def each_validate(self):
     for idx, loss in enumerate(self.validation_losses):
-      self.writer.add_scalar(f"validation loss {idx}", loss, self.step_id)
-    self.writer.add_scalar(f"validation loss total", sum(self.validation_losses), self.step_id)
+      self.valid_writer.add_scalar(f"loss {idx}", loss, self.step_id)
+    self.valid_writer.add_scalar(f"loss total", sum(self.c), self.step_id)
+
+  def each_epoch(self):
+    for tag in [f"loss {idx}" for idx in range(len(self.training_losses))] + \
+         [f"loss total {idx}" for idx in range(len(self.validation_losses))]:
+      #  make a straight line in the tensorboard at the start of every epoch
+      self.meta_writer.add_scalar(tag, self.epoch_id, self.step_id * self.batch_size)
+      self.meta_writer.add_scalar(tag, 0,             self.step_id * self.batch_size)
+      self.meta_writer.add_scalar(tag, self.epoch_id, self.step_id * self.batch_size)
 
   def train(self):
     for epoch_id in range(self.max_epochs):
