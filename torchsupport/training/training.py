@@ -131,9 +131,9 @@ class SupervisedTraining(Training):
     self.valid_callback = valid_callback
     self.network_name = network_name
     self.batch_size = batch_size
-    self.train_writer = SummaryWriter(f'{network_name}-train')
-    self.valid_writer = SummaryWriter(f'{network_name}-valid')
-    self.meta_writer = SummaryWriter(f'{network_name}-meta')
+    # self.train_writer = SummaryWriter(f'{network_name}-train')
+    # self.valid_writer = SummaryWriter(f'{network_name}-valid')
+    # self.meta_writer = SummaryWriter(f'{network_name}-meta')
     self.device = device
     self.accumulate = accumulate
     self.num_workers = num_workers
