@@ -240,9 +240,9 @@ class SupervisedTraining(Training):
     for tag in [f"loss {idx}" for idx in range(len(self.training_losses))] + \
          [f"loss total {idx}" for idx in range(len(self.validation_losses))]:
       #  make a straight line in the tensorboard at the start of every epoch
-      self.meta_writer.add_scalar(tag, self.epoch_id, self.step_id * self.batch_size)
-      self.meta_writer.add_scalar(tag, 0,             self.step_id * self.batch_size)
-      self.meta_writer.add_scalar(tag, self.epoch_id, self.step_id * self.batch_size)
+      self.meta_writer.add_scalar(tag, self.epoch_id, self.step_id)
+      self.meta_writer.add_scalar(tag, 0,             self.step_id)
+      self.meta_writer.add_scalar(tag, self.epoch_id, self.step_id)
 
   def train(self):
     for epoch_id in range(self.max_epochs):
